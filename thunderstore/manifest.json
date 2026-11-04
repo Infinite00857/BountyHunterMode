@@ -1,0 +1,9 @@
+{
+  "name": "MPH_Samus",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/Infinite00857/MprimeHunters",
+  "description": "Play ULTRAKILL as Samus from Metroid Prime Hunters: MPH movement, arm cannon, every MPH weapon, Morph Ball and helmet HUD. Turn on \"Samus Mode\" in the cheat menu. Needs your own MPH (USA) ROM.",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100"
+  ]
+}
