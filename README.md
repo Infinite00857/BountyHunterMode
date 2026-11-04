@@ -83,7 +83,9 @@ Needs the .NET 10 SDK, and ULTRAKILL with BepInEx 5 installed (the game's DLLs a
 .\build.ps1 -UkDir "C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL"
 .\build.ps1 -UkDir "<ULTRAKILL folder>" -Rom "<your MPH .nds>" -Sim   # + headless checks (src\MphSim)
 ```
-`build.ps1` builds `src\MphSamus` and copies the DLLs into the game's `BepInEx\plugins\MphSamus`.
+`build.ps1` builds `src\MphSamus` and copies the DLLs into the game's `BepInEx\plugins\MphSamus`. Add `-Package`
+(`--package` for `build.sh`) to also make the release zip `release\MPH_Samus-<version>.zip` (Thunderstore layout,
+version from `thunderstore\manifest.json`); it never includes the ROM or any game files.
 
 - `src/MphCore`: MphRead's ROM readers (models, animations, textures, sounds, effects, weapon and player tables) and
   Samus's simulation (no Unity).
