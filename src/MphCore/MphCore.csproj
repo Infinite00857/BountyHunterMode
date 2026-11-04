@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>MphRead</RootNamespace>
+    <NoWarn>CS1591;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS0162;CS0168;CS0219;CS0414;CS0649</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="OpenTK.Mathematics"><HintPath>../../lib/OpenTK.Mathematics.dll</HintPath></Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe"><HintPath>$(UkManaged)/System.Runtime.CompilerServices.Unsafe.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="CommunityToolkit.HighPerformance"><HintPath>../../lib/CommunityToolkit.HighPerformance.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

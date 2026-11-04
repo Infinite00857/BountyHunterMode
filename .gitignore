@@ -1,0 +1,9 @@
+bin/
+obj/
+work/
+release/
+game/
+*.nds
+*.zip
+.vs/
+*.user

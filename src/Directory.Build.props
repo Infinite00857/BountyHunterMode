@@ -1,0 +1,12 @@
+<!-- Where ULTRAKILL is installed (game DLLs are referenced from there, never copied into the repo).
+     Order: -p:UkDir=... on the command line, the ULTRAKILL_DIR environment variable, then the default Steam path
+     for the OS. -->
+<Project>
+  <PropertyGroup>
+    <UkDir Condition="'$(UkDir)' == '' and '$(ULTRAKILL_DIR)' != ''">$(ULTRAKILL_DIR)</UkDir>
+    <UkDir Condition="'$(UkDir)' == '' and '$(OS)' == 'Windows_NT'">C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL</UkDir>
+    <UkDir Condition="'$(UkDir)' == ''">$(HOME)/Library/Application Support/Steam/steamapps/common/ULTRAKILL</UkDir>
+    <UkManaged>$(UkDir)/ULTRAKILL_Data/Managed</UkManaged>
+    <BepCore>$(UkDir)/BepInEx/core</BepCore>
+  </PropertyGroup>
+</Project>
