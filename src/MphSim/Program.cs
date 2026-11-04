@@ -34,6 +34,41 @@ if (Environment.GetEnvironmentVariable("MPH_ITEM_COUNT") != null)
     foreach (KeyValuePair<string, int> kv in counts) { Console.WriteLine($"  {kv.Key}: {kv.Value}"); }
     return 0;
 }
+// ---- icon render (MPH_ICON=out.png[,size,yaw]): Samus in her idle pose facing the camera, transparent background ----
+if (Environment.GetEnvironmentVariable("MPH_ICON") is string iconArg)
+{
+    string[] parts = iconArg.Split(',');
+    int size = parts.Length > 1 ? int.Parse(parts[1]) : 1024;
+    float yaw = parts.Length > 2 ? float.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture) : 0;
+    var body = new BipedModel();
+    body.Biped.SetAnimation((int)BipedAnimation.Idle, AnimFlags.None);
+    body.Torso.SetAnimation((int)BipedAnimation.Idle, AnimFlags.None);
+    var light = MphLighting.Default;
+    light.Light1Dir = new Vector3(-0.35f, -0.45f, 1f).Normalized();   // key light from the camera side, above
+    light.Light1Color = new Vector3(1f, 0.95f, 0.88f);
+    light.Light2Dir = new Vector3(0.6f, 0.2f, 0.6f).Normalized();     // soft fill
+    light.Light2Color = new Vector3(0.45f, 0.45f, 0.55f);
+    float a = yaw * MathF.PI / 180;
+    body.PoseBiped(new Vector3(MathF.Sin(a), 0, -MathF.Cos(a)), 0, light, 1);
+    var bmin = new Vector3(1e9f); var bmax = new Vector3(-1e9f);
+    for (int bi = 0; bi < body.BipedPosed.BatchCount; bi++)
+    {
+        var batch = body.BipedPosed.Batches[bi];
+        for (int i = 0; i < batch.Count; i++) { bmin = Vector3.ComponentMin(bmin, batch.Positions[i]); bmax = Vector3.ComponentMax(bmax, batch.Positions[i]); }
+    }
+    const float fov = 22;
+    float height = Math.Max(bmax.Y - bmin.Y, bmax.X - bmin.X) / 0.9f;   // 90% of the frame
+    float dist = height / 2 / MathF.Tan(fov * MathF.PI / 360) + (bmax.Z - bmin.Z) / 2;
+    Vector3 shift = new Vector3(-(bmin.X + bmax.X) / 2, -(bmin.Y + bmax.Y) / 2, dist - (bmin.Z + bmax.Z) / 2);
+    for (int bi = 0; bi < body.BipedPosed.BatchCount; bi++)
+    {
+        var batch = body.BipedPosed.Batches[bi];
+        for (int i = 0; i < batch.Count; i++) { batch.Positions[i] += shift; }
+    }
+    SoftRender.Draw(body.BipedPosed, parts[0], size, size, fov, transparent: true);
+    Console.WriteLine($"icon render {parts[0]} ({size}px, bounds {bmin} .. {bmax})");
+    return 0;
+}
 int failures = 0;
 void Check(string name, bool ok, string detail)
 {
@@ -943,12 +978,15 @@ static class FxRender
 // Minimal perspective rasterizer for posed batches (camera at origin, MPH camera space: +X left, +Y up, +Z forward).
 static class SoftRender
 {
-    public static void Draw(PosedModel m, string path, int w, int h, float fovDeg)
+    public static void Draw(PosedModel m, string path, int w, int h, float fovDeg, bool transparent = false)
     {
         var img = new RgbaImage(w, h);
         var depth = new float[w * h];
         Array.Fill(depth, float.MaxValue);
-        for (int i = 0; i < w * h; i++) { img.Pixels[i * 4] = 40; img.Pixels[i * 4 + 1] = 40; img.Pixels[i * 4 + 2] = 60; img.Pixels[i * 4 + 3] = 255; }
+        if (!transparent)
+        {
+            for (int i = 0; i < w * h; i++) { img.Pixels[i * 4] = 40; img.Pixels[i * 4 + 1] = 40; img.Pixels[i * 4 + 2] = 60; img.Pixels[i * 4 + 3] = 255; }
+        }
         float f = h / 2f / MathF.Tan(fovDeg * MathF.PI / 360f);
         for (int bi = 0; bi < m.BatchCount; bi++)
         {
@@ -1001,6 +1039,7 @@ static class SoftRender
                         img.Pixels[o] = (byte)Math.Clamp(r * cr * 255 * a + img.Pixels[o] * (1 - a), 0, 255);
                         img.Pixels[o + 1] = (byte)Math.Clamp(g * cg * 255 * a + img.Pixels[o + 1] * (1 - a), 0, 255);
                         img.Pixels[o + 2] = (byte)Math.Clamp(bl * cb * 255 * a + img.Pixels[o + 2] * (1 - a), 0, 255);
+                        if (transparent) { img.Pixels[o + 3] = (byte)Math.Clamp(a * 255 + img.Pixels[o + 3] * (1 - a), 0, 255); }
                     }
                 }
             }

@@ -383,7 +383,7 @@ namespace MphSamus.Core
         public bool Launched;
         private int _launchGrace, _bhopSteps;
         private const int LaunchGraceSteps = 6;
-        public int BhopWindowSteps = 9;   // after a launch landing: jump within this many 60 Hz steps to keep the speed
+        public int BhopWindowSteps = 0;   // after a launch landing: a jump within this many 60 Hz steps keeps the speed (off)
 
         // jump pads, ULTRAKILL launches: this exact speed next step (units per DS frame), momentum kept after
         public void SetLaunchSpeed(Vector3 speed)

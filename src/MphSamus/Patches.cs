@@ -135,8 +135,8 @@ namespace MphSamus
             private static bool Prefix(ref Vector3 __result)
             {
                 SamusController c = SamusController.Current;
-                if (!SamusController.IsActive || c == null || c.EyeWorld == Vector3.zero) { return true; }
-                __result = c.EyeWorld;
+                if (!SamusController.IsActive || c == null || c.TravelPoint == Vector3.zero) { return true; }
+                __result = c.TravelPoint;
                 return false;
             }
         }
@@ -146,9 +146,9 @@ namespace MphSamus
         {
             private static void Prefix() => SamusController.Current?.CameraToEye();
 
-            private static void Postfix(bool? __result)
+            private static void Postfix(bool? __result, ULTRAKILL.Portal.PortalTravelDetails details)
             {
-                if (__result == true) { SamusController.Current?.OnPortalTravel(); }
+                if (__result == true) { SamusController.Current?.OnPortalTravel(details.enterToExit); }
             }
         }
 

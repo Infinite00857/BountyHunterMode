@@ -20,7 +20,7 @@ namespace MphSamus
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "infinite.mphsamus";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -44,7 +44,6 @@ namespace MphSamus
         public static ConfigEntry<bool> DebugEvents;
         public static ConfigEntry<string> GunShader;
         public static ConfigEntry<float> ThirdPersonDistance;
-        public static ConfigEntry<float> BhopWindow;
         public static ConfigEntry<float> StepHeight;
         public static ConfigEntry<float> SlopeLimit;
         public static ConfigEntry<float> MissileForce;
@@ -58,12 +57,16 @@ namespace MphSamus
         public static ConfigEntry<float> MagmaulChargedIgnite;
         public static ConfigEntry<float> ChargeBeamSplash;
         public static ConfigEntry<float> ChargeBeamSplashDamage;
+        public static ConfigEntry<string> RomPath;
 
         private void Awake()
         {
             Instance = this;
             Log = Logger;
             DllDir = Path.GetDirectoryName(Info.Location) ?? Paths.PluginPath;
+            RomPath = Config.Bind("Samus", "RomPath", "",
+                "Your Metroid Prime Hunters (USA) .nds file. Empty = look in the ULTRAKILL folder (and next to the mod's DLL); " +
+                "if none is found the mod asks with a file picker and remembers the choice here.");
             PlayerScale = Config.Bind("Samus", "PlayerScale", 0f,
                 "MPH units -> ULTRAKILL units for Samus (speeds, jump height, gun size). 0 = automatic from V1's collider height.");
             DamageDealtScale = Config.Bind("Balance", "DamageDealtScale", 1f / 12f,
@@ -72,8 +75,6 @@ namespace MphSamus
                 "ULTRAKILL damage x this = MPH energy lost (V1 has 100 HP, Samus starts with 99 energy and no blood healing).");
             ChargedKnockback = Config.Bind("Balance", "ChargedKnockback", 25000f,
                 "Force a full Charge Beam shot pushes enemies with.");
-            BhopWindow = Config.Bind("Balance", "BhopWindow", 0.15f,
-                "After a launch (jump pads, blasts): jump within this many seconds of landing to keep the speed (no floor friction meanwhile).");
             StepHeight = Config.Bind("Movement", "StepHeight", 0.75f,
                 "Ledges up to this tall (ULTRAKILL units; V1 is 3.5 tall) are stepped onto while walking or rolling, and " +
                 "floors this far below are snapped down to (stairs, walking down slopes).");
@@ -142,12 +143,36 @@ namespace MphSamus
             StartRomPreparation();
         }
 
+        // the file picker's choice (main thread): remembered in the config, then prepared
+        internal static void UseRom(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) { return; }
+            if (Rom == RomStatus.Preparing || Rom == RomStatus.Ready) { return; }
+            RomPath.Value = path;
+            Log.LogInfo($"ROM chosen: {path}");
+            Instance.StartRomPreparation();
+        }
+
+        // no usable ROM: ask for one with a file picker (on the main menu once per launch, and whenever Samus Mode is
+        // turned on without one)
+        internal static void AskForRom()
+        {
+            if (Rom == RomStatus.Missing || Rom == RomStatus.Failed) { RomPicker.Show(); }
+        }
+        private static bool _askedOnMenu;
+
         private void StartRomPreparation()
         {
-            // the player's own ROM: in the ULTRAKILL folder (next to ULTRAKILL.exe; easiest with mod managers), next to this
-            // DLL, or in the BepInEx folder
+            // the player's own ROM: the config's RomPath (the file picker's choice), else in the ULTRAKILL folder (next to
+            // ULTRAKILL.exe; easiest with mod managers), next to this DLL, or in the BepInEx folder
             string rom = null;
-            foreach (string dir in new[] { Paths.GameRootPath, DllDir, Paths.BepInExRootPath, Paths.PluginPath })
+            string chosen = RomPath.Value;
+            if (!string.IsNullOrEmpty(chosen))
+            {
+                if (File.Exists(chosen)) { rom = chosen; }
+                else { Log.LogWarning($"RomPath {chosen} doesn't exist: searching the usual places"); }
+            }
+            foreach (string dir in rom != null ? new string[0] : new[] { Paths.GameRootPath, DllDir, Paths.BepInExRootPath, Paths.PluginPath })
             {
                 try { rom = !string.IsNullOrEmpty(dir) && Directory.Exists(dir) ? RomCache.FindRom(dir) : null; }
                 catch (Exception ex) { Log.LogWarning($"ROM search in {dir}: {ex.Message}"); }
@@ -156,7 +181,7 @@ namespace MphSamus
             if (rom == null)
             {
                 Rom = RomStatus.Missing;
-                RomMessage = $"Samus Mode needs your Metroid Prime Hunters (USA) .nds file in the ULTRAKILL folder: {Paths.GameRootPath}";
+                RomMessage = $"Samus Mode needs your Metroid Prime Hunters (USA) .nds file: choose it in the file picker, or put it in the ULTRAKILL folder ({Paths.GameRootPath})";
                 Log.LogWarning(RomMessage);
                 return;
             }
@@ -167,7 +192,7 @@ namespace MphSamus
                 string error = RomCache.Prepare(rom, cacheRoot, s => Log.LogInfo(s));
                 if (error != null)
                 {
-                    RomMessage = error.Split('\n')[0];
+                    RomMessage = "Couldn't read that ROM (it must be the USA Metroid Prime Hunters .nds): " + error.Split('\n')[0];
                     Rom = RomStatus.Failed;
                     Log.LogError(error);
                     return;
@@ -200,6 +225,12 @@ namespace MphSamus
             if (Rom == RomStatus.Ready)
             {
                 MphAssets.EnsureLoaded();
+            }
+            RomPicker.Tick();
+            if (!_askedOnMenu && SceneHelper.CurrentScene == "Main Menu" && (Rom == RomStatus.Missing || Rom == RomStatus.Failed))
+            {
+                _askedOnMenu = true;
+                AskForRom();
             }
             SamusController.TryAttach();
         }

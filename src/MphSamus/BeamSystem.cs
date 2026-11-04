@@ -13,8 +13,8 @@
 //   (Judicator, Magmaul) can hit her directly after 4 frames;
 // - missiles follow ULTRAKILL's rocket rules: explosion immunities (Malicious Face, Idol, blocking Soldiers),
 //   Cerberus/Providence bonuses, a bigger blast on airborne enemies, explosion knockback, they glance off armor /
-//   Malicious Faces and still splash on terrain; charged missiles hit like the Knuckleblaster ("heavypunch"); her own
-//   blast costs Samus a little energy;
+//   Malicious Faces and still splash on terrain; charged missiles break things like the Knuckleblaster (not Gutterman
+//   shields: a fully charged Power Beam shot breaks those); her own blast costs Samus a little energy;
 // - electric shots (Volt Driver, Shock Coil) electrocute the water they pass through (RevolverBeam.CheckWater) and the
 //   charged Volt Driver powers electric switches (AttributeChecker, like the electric railcannon);
 // - shots pass through ULTRAKILL's portals (Fraud);
@@ -618,7 +618,9 @@ namespace MphSamus
                 // a rocket's direct hit: the explosion rules (immunities), bigger blast on an airborne enemy
                 s.Super = !eid.flying && (eid.gce != null && !eid.gce.onGround || eid.timeSinceSpawned <= 0.15f);
                 // knockback like a rocket's explosion (Explosion.Collide: away from the blast, lifted, 50000)
-                ExplosionHit(eid, col, point, point, dmg, charged ? "heavypunch" : "explosion", BlastForce(dir));
+                // (charged: the Knuckleblaster's hitter, except on Guttermen - their shield is the charged Power Beam's)
+                string hitter = charged && eid.enemyType != EnemyType.Gutterman ? "heavypunch" : "explosion";
+                ExplosionHit(eid, col, point, point, dmg, hitter, BlastForce(dir));
                 Plugin.Event($"hit {eid.enemyType} ({col.name}) with a{(charged ? " charged" : "")} missile for {dmg:F2}{(s.Super ? " (airborne: big blast)" : "")}, health {eid.health:F2}{(eid.dead ? " - killed" : "")}");
                 return;
             }
@@ -642,6 +644,15 @@ namespace MphSamus
             // full heal is off for Samus, the hit knocks pickups out instead (owner)
             bool parry = s.Weapon == MphBeam.PowerBeam && charged && CanParry(eid, col);
             eid.hitter = parry ? "punch" : HitterFor(s.Weapon);
+            // a fully charged Power Beam shot breaks a Gutterman's shield (Gutterman.OnDamage: hitter "heavypunch", as the
+            // Knuckleblaster)
+            bool shieldBreak = !parry && s.Weapon == MphBeam.PowerBeam && charged && e.ChargeFraction >= 1
+                && eid.enemyType == EnemyType.Gutterman && eid.TryGetComponent(out Gutterman gm) && gm.hasShield;
+            if (shieldBreak)
+            {
+                eid.hitter = "heavypunch";
+                Plugin.Event("full charge broke a Gutterman's shield");
+            }
             Vector3 force = s.Weapon == MphBeam.PowerBeam && charged
                 ? dir * Plugin.ChargedKnockback.Value * Mathf.Max(0.25f, e.ChargeFraction)
                 : dir * (e.Knockback > 0 ? 1000f + e.Knockback * 4000f : 1000f);
@@ -954,7 +965,7 @@ namespace MphSamus
                 {
                     if (s.Weapon == MphBeam.Magmaul) { eid.hitterAttributes.Add(HitterAttribute.Fire); }
                     // missiles push like ULTRAKILL's explosions; the shells (Battlehammer, Magmaul) a quarter of that
-                    ExplosionHit(eid, col, point, at, dmg, missile && charged && eid.enemyType == EnemyType.Gutterman ? "heavypunch" : "explosion",
+                    ExplosionHit(eid, col, point, at, dmg, "explosion",
                         BlastForce((point - at).normalized) * (missile ? 1 : 0.25f));
                 }
                 else

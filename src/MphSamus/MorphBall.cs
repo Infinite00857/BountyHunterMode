@@ -203,6 +203,19 @@ namespace MphSamus
         }
 
         // respawn / leaving the level: back to the standing collider and first person at once
+        // through a portal (NewMovement.OnTravel moved the body): the follow camera's points and the blend's start go
+        // through with it, so the camera keeps its place behind the ball instead of swinging across the room; the trail
+        // starts over at the exit
+        public void OnPortalTravel(Matrix4x4 enterToExit)
+        {
+            _camPos = enterToExit.MultiplyPoint3x4(_camPos);
+            _camTarget = enterToExit.MultiplyPoint3x4(_camTarget);
+            _camFrom = enterToExit.MultiplyPoint3x4(_camFrom);
+            _lastCamBall = BallCenter;
+            _switchFromRot = enterToExit.rotation * _switchFromRot;
+            System.Array.Clear(_trailAlpha, 0, TrailSegments);
+        }
+
         public void Reset()
         {
             Shrink(false);

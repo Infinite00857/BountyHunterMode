@@ -24,6 +24,7 @@ namespace MphSamus
         {
             IsActive = true;
             Plugin.SamusMode = true;
+            Plugin.AskForRom();   // (no ROM yet: the file picker)
             if (Plugin.Rom != Plugin.RomStatus.Ready)
             {
                 string why = Plugin.Rom == Plugin.RomStatus.Preparing ? "Preparing Metroid Prime Hunters data, one moment..." : Plugin.RomMessage;

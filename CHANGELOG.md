@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1 (2026-11-03)
+- Clear AI disclaimer: all of the mod's code was written by AI (Anthropic's Claude).
+- New icon: a render of Samus facing the camera.
+- No ROM found: the mod opens a file picker (the choice is saved as `Samus/RomPath` in the config).
+- ULTRAKILL launches (blasts, lava, launch triggers) follow V1's arc (V1's gravity until landing); the leftover
+  bunny-hop speed carry from missile jumping is gone. Samus no longer gets thrown around by small launches.
+- A fully charged Power Beam shot breaks Gutterman shields; missiles no longer do.
+- Morph Ball: portals carry its camera and trail through (no camera swing across the room), and it's tracked through
+  portals by the ball's center.
+
 ## 1.0.0 (2026-11-03)
 First public release.
 - Samus Mode cheat (ULTRAKILL's cheat menu, category METROID PRIME HUNTERS): Samus with every weapon and expansion;

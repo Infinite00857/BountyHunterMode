@@ -4,8 +4,12 @@ Play ULTRAKILL as **Samus from Metroid Prime Hunters (Nintendo DS)**: MPH moveme
 cannon with its animations, every MPH weapon, the Morph Ball, the helmet HUD, MPH effects and sounds, all inside
 ULTRAKILL's own levels.
 
+> **AI DISCLAIMER: this mod was made with AI.** All of its code was written by an AI, Anthropic's Claude (Claude Opus,
+> through Claude Code). A human (infinite) came up with the mod, directed the AI, and playtests it, but did not write
+> the code by hand. The package icon is a render of Samus's in-game model made with the mod's own tools.
+
 > Fan-made and unofficial. Not affiliated with or endorsed by Nintendo, Retro Studios, Nintendo Software Technology,
-> Arsi "Hakita" Patala or New Blood Interactive. **No game data is included**: the mod reads your own copy of
+> Arsi "Hakita" Patala or New Blood Interactive. **No game files are included**: the mod reads your own copy of
 > Metroid Prime Hunters.
 
 ## Features
@@ -18,7 +22,8 @@ ULTRAKILL's own levels.
 - **Morph Ball**: rolling, Boost Ball, bombs (they hit like ground slams and blow up breakables).
 - **MPH helmet HUD**: energy, tanks, ammo, weapon icon, target circle, damage flashes and the low-energy alarm.
 - **Plays by ULTRAKILL's rules**: missiles follow rocket rules (explosion knockback, Malicious Face / armor
-  ricochets), the charged Power Beam parries melee attacks and destroys parryable projectiles, the Volt Driver and Shock
+  ricochets), the charged Power Beam parries melee attacks, destroys parryable projectiles and (fully charged) breaks Gutterman
+  shields, the Volt Driver and Shock
   Coil electrocute (and electrify water), the Magmaul ignites, the Judicator chills, the Imperialist pierces like the
   railcannon, and the charged Volt Driver powers electric switches.
 - **Works with ULTRAKILL's level tech**: jump pads, launches, lava, water, the Fraud layer's portals and gravity
@@ -34,8 +39,9 @@ ULTRAKILL's own levels.
 ## Install
 1. Install BepInEx 5 for ULTRAKILL (or use a mod manager such as r2modman / Thunderstore Mod Manager).
 2. Put the mod's files in `ULTRAKILL\BepInEx\plugins\MphSamus\` (a mod manager does this for you).
-3. Copy your Metroid Prime Hunters `.nds` file into the **ULTRAKILL folder** (next to `ULTRAKILL.exe`). Any file name
-   works. It can also sit next to `MphSamus.dll`.
+3. Start the game: if the mod doesn't find your ROM it opens a file picker, so just choose your Metroid Prime Hunters
+   `.nds` file (the choice is remembered in the config as `Samus/RomPath`). Or copy the `.nds` into the **ULTRAKILL
+   folder** (next to `ULTRAKILL.exe`) beforehand; any file name works.
 4. Start the game. The first start extracts the ROM once (about 20 seconds) into `BepInEx\cache\MphSamus\`.
 5. In a level: enable cheats (ULTRAKILL's cheat code), open the cheat menu (`~` or Home) and turn on **Samus Mode**.
    Turn on ULTRAKILL's *Keep cheats enabled* if you want Samus in every level.
@@ -67,7 +73,8 @@ ROM data and can be deleted too.
 
 ## Troubleshooting
 - The mod writes `BepInEx\MphSamus.log`. Set `Debug/LogEvents = true` in the config for a detailed gameplay log.
-- "Samus Mode needs your Metroid Prime Hunters (USA) .nds file...": the ROM wasn't found; see Install step 3.
+- "Samus Mode needs your Metroid Prime Hunters (USA) .nds file...": the ROM wasn't found. Turning Samus Mode on opens
+  the file picker again; or set `Samus/RomPath` in the config by hand.
 - Extraction failed: make sure the ROM is the USA version and not a patched or trimmed copy.
 
 ## Building from source
@@ -90,8 +97,10 @@ Needs the .NET 10 SDK, and ULTRAKILL with BepInEx 5 installed (the game's DLLs a
   **CommunityToolkit.HighPerformance** (MIT; see `THIRD-PARTY-NOTICES.md`).
 - ULTRAKILL by Arsi "Hakita" Patala / New Blood Interactive. Metroid Prime Hunters by Nintendo / Nintendo Software
   Technology.
-- Design and playtesting: infinite. Code written with Claude Code (Anthropic's Claude Opus).
+- Idea, design, direction and playtesting: infinite. **All code written by AI**: Anthropic's Claude (Claude Opus) in
+  Claude Code.
 
 ## License
-The mod's own code is MIT licensed (`LICENSE`). MphRead's code keeps its own MIT license. The mod contains no Nintendo
-or ULTRAKILL assets; everything MPH is read from the player's own ROM at runtime.
+The mod's own code is MIT licensed (`LICENSE`). MphRead's code keeps its own MIT license. The mod ships no Nintendo
+or ULTRAKILL game files; everything MPH is read from the player's own ROM at runtime (the package icon is a render of
+the in-game model).

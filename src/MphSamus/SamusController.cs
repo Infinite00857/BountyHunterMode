@@ -451,9 +451,16 @@ namespace MphSamus
                 _inElevator = inside;
                 Plugin.Event(inside ? $"in an elevator ({_elevatorFloor.name}): HUD + arm cannon hidden, V1 gravity" : "left the elevator");
             }
-            // V1's gravity (Physics.gravity, Unity units/s^2) in MPH units per DS frame^2: one 60 Hz step adds Gravity / 2
-            // per DS frame = g / 60 Unity units/s
-            Sim.GravityOverride = _inElevator ? -Physics.gravity.magnitude / (900 * K) : float.NaN;
+        }
+
+        // V1's gravity (Physics.gravity, Unity units/s^2) in MPH units per DS frame^2: one 60 Hz step adds Gravity / 2
+        // per DS frame = g / 60 Unity units/s. Used in elevators and while flying from an ULTRAKILL launch: launches set
+        // V1-sized speeds, and MPH's lighter gravity carried Samus much further than V1 (she got thrown around).
+        private void UpdateGravity()
+        {
+            if (_ukLaunch && Sim.Standing && !Sim.Launched) { _ukLaunch = false; }
+            bool v1 = _inElevator || _ukLaunch && !Sim.Standing;
+            Sim.GravityOverride = v1 ? -Physics.gravity.magnitude / (900 * K) : float.NaN;
         }
 
         // ---- ULTRAKILL's fake fall (8-4): FakeFallZone holds V1 near its height (jump rises, slide sinks) ----
@@ -483,6 +490,7 @@ namespace MphSamus
             Vector3 v = _rb.velocity;
             Sim.AfterCollision(standing, ceiling, WorldToSim(v) / (30 * K));
             UpdateElevator(standing, floor);
+            UpdateGravity();
             bool fakeFall = _nm.fakeFallRequests > 0;
             // terminals: the arm cannon goes down and can't fire; the left hand reaches for the screen
             bool terminal = AtTerminal && !Sim.InBall;
@@ -540,7 +548,6 @@ namespace MphSamus
             _slotLatch = _cycleLatch = 0;
             SyncArsenal();
             SyncDuals();
-            Sim.BhopWindowSteps = Mathf.Max(0, Mathf.RoundToInt(Plugin.BhopWindow.Value * 60));
             Sim.Step(input);
             if (fakeFall) { FakeFall(src, canAct); }
             if (Sim.ThawedThisStep) { Audio.Play("SHOTGUN_BREAK_FREEZE"); }
@@ -1132,19 +1139,28 @@ namespace MphSamus
         }
 
         // ---- portals (Patches.TravellerPosition / Travel) ----
-        // before NewMovement.OnTravel: the camera at Samus's eye (OnTravel places the body from the camera)
+        // the point ULTRAKILL's portals track: Samus's eye, or the ball's center in the Morph Ball (a ball rolling into a
+        // portal crosses it; her standing eye height above the ball could be inside a tunnel's ceiling)
+        public Vector3 TravelPoint => Sim != null && Sim.InBall && _ball != null ? _ball.BallCenter : EyeWorld;
+
+        // before NewMovement.OnTravel: the camera at the travel point (OnTravel places the body from the camera)
         public void CameraToEye()
         {
-            if (_cc == null || _cc.transform.parent == null || EyeWorld == Vector3.zero) { return; }
-            _cc.transform.localPosition = _cc.transform.parent.InverseTransformPoint(EyeWorld);
+            Vector3 p = TravelPoint;
+            if (_cc == null || _cc.transform.parent == null || p == Vector3.zero) { return; }
+            _cc.transform.localPosition = _cc.transform.parent.InverseTransformPoint(p);
         }
 
         // after a portal: OnTravel turned the body's velocity (and maybe gravity) - the sim takes all of it, the vertical
         // part included (a fall into a floor portal comes out of a wall portal sideways)
-        public void OnPortalTravel()
+        public void OnPortalTravel(Matrix4x4 enterToExit)
         {
             if (Sim == null) { return; }
+            OV3 ballFacing = Sim.BallFacing;
+            Vector3 rolled = enterToExit.MultiplyVector(SimToWorld(ballFacing));
             Sim.Speed = WorldToSim(_rb.velocity) / (30 * K);
+            if (Sim.InBall && rolled.sqrMagnitude > 1e-6f) { Sim.BallFacing = WorldToSim(rolled.normalized); }
+            _ball?.OnPortalTravel(enterToExit);
             _haveView = false;
             _haveLastAim = false;
             Plugin.Event($"portal: {_rb.velocity.magnitude:F1} u/s, up {Up}");
@@ -1429,6 +1445,7 @@ namespace MphSamus
         public void OnJumpPad(Vector3 velocity)
         {
             if (Sim == null || _nm.dead || velocity.sqrMagnitude < 1) { return; }   // (a pad spawned on her: no push)
+            _ukLaunch = false;   // (jump pads keep MPH's gravity)
             if (Sim.ActivateJumpPad(WorldToSim(velocity) / (30 * K)))
             {
                 string n = SoundName(JumpPadSample);
@@ -1446,11 +1463,13 @@ namespace MphSamus
         }
 
         // NewMovement.Launch (lava bounces, LaunchPlayer triggers, blast knockback, ...): the resulting velocity
-        // (Unity units/s) becomes Samus's speed, carried like a rocket jump until she lands
+        // (Unity units/s) becomes Samus's speed; until she lands she flies V1's arc (V1's gravity, no air drag)
+        private bool _ukLaunch;
         public void OnLaunch(Vector3 velocity, string what)
         {
             if (Sim == null || _nm.dead) { return; }
             Sim.SetLaunchSpeed(WorldToSim(velocity) / (30 * K));
+            _ukLaunch = true;
             Plugin.Event($"launched by {what}: {velocity.magnitude:F1} u/s");
         }
 
