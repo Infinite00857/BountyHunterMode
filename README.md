@@ -37,8 +37,10 @@ ULTRAKILL's own levels.
 - Your own **Metroid Prime Hunters** ROM, **USA version** (game code AMHE, revision 0 or 1), as a `.nds` file.
 
 ## Install
-1. Install BepInEx 5 for ULTRAKILL (or use a mod manager such as r2modman / Thunderstore Mod Manager).
-2. Put the mod's files in `ULTRAKILL\BepInEx\plugins\MphSamus\` (a mod manager does this for you).
+1. Install BepInEx 5 for ULTRAKILL.
+2. Download `MPH_Samus-<version>.zip` from the [Releases](https://github.com/Infinite00857/BountyHunterMode/releases)
+   page and extract it into the **ULTRAKILL folder** (next to `ULTRAKILL.exe`): it puts the mod's files in
+   `ULTRAKILL\BepInEx\plugins\MphSamus\`.
 3. Start the game: if the mod doesn't find your ROM it opens a file picker, so just choose your Metroid Prime Hunters
    `.nds` file (the choice is remembered in the config as `Samus/RomPath`). Or copy the `.nds` into the **ULTRAKILL
    folder** (next to `ULTRAKILL.exe`) beforehand; any file name works.
@@ -68,7 +70,7 @@ Note: as with all ULTRAKILL cheats, levels played with cheats enabled don't get 
 splash self-damage, third-person distance, sound volume, step height, slope limit and more.
 
 ## Uninstall
-Delete `BepInEx\plugins\MphSamus\` (or remove it in your mod manager). `BepInEx\cache\MphSamus\` holds the extracted
+Delete `BepInEx\plugins\MphSamus\`. `BepInEx\cache\MphSamus\` holds the extracted
 ROM data and can be deleted too.
 
 ## Troubleshooting
@@ -84,8 +86,9 @@ Needs the .NET 10 SDK, and ULTRAKILL with BepInEx 5 installed (the game's DLLs a
 .\build.ps1 -UkDir "<ULTRAKILL folder>" -Rom "<your MPH .nds>" -Sim   # + headless checks (src\MphSim)
 ```
 `build.ps1` builds `src\MphSamus` and copies the DLLs into the game's `BepInEx\plugins\MphSamus`. Add `-Package`
-(`--package` for `build.sh`) to also make the release zip `release\MPH_Samus-<version>.zip` (Thunderstore layout,
-version from `thunderstore\manifest.json`); it never includes the ROM or any game files.
+(`--package` for `build.sh`) to also make the release zip `release\MPH_Samus-<version>.zip` (extracts into the
+ULTRAKILL folder; version from `Plugin.Version` in `src\MphSamus\Plugin.cs`); it never includes the ROM or any game
+files.
 
 - `src/MphCore`: MphRead's ROM readers (models, animations, textures, sounds, effects, weapon and player tables) and
   Samus's simulation (no Unity).

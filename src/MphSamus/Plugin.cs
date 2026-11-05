@@ -20,7 +20,7 @@ namespace MphSamus
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "infinite.mphsamus";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -164,7 +164,7 @@ namespace MphSamus
         private void StartRomPreparation()
         {
             // the player's own ROM: the config's RomPath (the file picker's choice), else in the ULTRAKILL folder (next to
-            // ULTRAKILL.exe; easiest with mod managers), next to this DLL, or in the BepInEx folder
+            // ULTRAKILL.exe), next to this DLL, or in the BepInEx folder
             string rom = null;
             string chosen = RomPath.Value;
             if (!string.IsNullOrEmpty(chosen))

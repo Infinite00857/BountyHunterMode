@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 (2026-11-05)
+- Not on Thunderstore: the mod is released on GitHub only. The release zip now extracts straight into the ULTRAKILL
+  folder (`BepInEx\plugins\MphSamus\`); the Thunderstore manifest and icon are gone. No gameplay changes.
+
 ## 1.0.1 (2026-11-03)
 - Clear AI disclaimer: all of the mod's code was written by AI (Anthropic's Claude).
 - New icon: a render of Samus facing the camera.

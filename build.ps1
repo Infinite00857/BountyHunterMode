@@ -1,7 +1,7 @@
 # Build the MPH Samus mod and copy it into ULTRAKILL's BepInEx\plugins\MphSamus (Windows / PowerShell).
 # Usage:  .\build.ps1                (build + deploy)
 #         .\build.ps1 -Sim           (also run the headless checks in src\MphSim)
-#         .\build.ps1 -Package       (also make the release zip: release\MPH_Samus-<version>.zip, Thunderstore layout)
+#         .\build.ps1 -Package       (also make the release zip: release\MPH_Samus-<version>.zip)
 #         .\build.ps1 -UkDir "D:\SteamLibrary\steamapps\common\ULTRAKILL" -Rom "C:\roms\Metroid Prime Hunters.nds"
 # Needs the .NET 10 SDK on PATH: https://dotnet.microsoft.com/download
 param(
@@ -31,15 +31,18 @@ if (-not (Get-ChildItem $out -Filter *.nds -ErrorAction SilentlyContinue) -and (
 }
 Write-Host "deployed to $out"
 if ($Package) {
-    # Thunderstore layout: manifest, icon, README and CHANGELOG at the root, next to the DLLs (no ROM, no game files)
-    $version = (Get-Content thunderstore\manifest.json -Raw | ConvertFrom-Json).version_number
+    # players extract the zip into the ULTRAKILL folder: it holds BepInEx\plugins\MphSamus\ (never the ROM or game files)
+    $version = [regex]::Match((Get-Content src\MphSamus\Plugin.cs -Raw), 'const string Version = "([^"]+)"').Groups[1].Value
     $stage = Join-Path $PSScriptRoot "release\MPH_Samus-$version"
     $zip = "$stage.zip"
     if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
     if (Test-Path $zip) { Remove-Item $zip -Force }
-    New-Item -ItemType Directory -Force -Path $stage | Out-Null
-    Copy-Item "$bin\MphSamus.dll", "$bin\MphCore.dll", "lib\OpenTK.Mathematics.dll", "lib\CommunityToolkit.HighPerformance.dll", "src\MphCore\MphRead\LICENSE-MphRead.txt", "thunderstore\manifest.json", "thunderstore\icon.png", "README.md", "CHANGELOG.md", "LICENSE", "THIRD-PARTY-NOTICES.md" $stage
-    Compress-Archive -Path "$stage\*" -DestinationPath $zip
+    $dest = Join-Path $stage "BepInEx\plugins\MphSamus"
+    New-Item -ItemType Directory -Force -Path $dest | Out-Null
+    Copy-Item "$bin\MphSamus.dll", "$bin\MphCore.dll", "lib\OpenTK.Mathematics.dll", "lib\CommunityToolkit.HighPerformance.dll", "src\MphCore\MphRead\LICENSE-MphRead.txt", "LICENSE", "THIRD-PARTY-NOTICES.md" $dest
+    # ZipFile writes "/" separators (Compress-Archive in Windows PowerShell 5.1 writes "\", which breaks the folders elsewhere)
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip)
     Write-Host "packaged $zip"
 }
 if ($Sim) {

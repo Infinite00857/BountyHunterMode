@@ -2,7 +2,7 @@
 # Build the MPH Samus mod and copy it into ULTRAKILL's BepInEx/plugins/MphSamus.
 # Usage: ./build.sh [--sim] [--package]
 #   --sim      also runs the headless checks in src/MphSim
-#   --package  also makes the release zip: release/MPH_Samus-<version>.zip (Thunderstore layout)
+#   --package  also makes the release zip: release/MPH_Samus-<version>.zip
 set -e
 cd "$(dirname "$0")"
 DOTNET="${DOTNET:-$HOME/.dotnet/dotnet}"
@@ -21,15 +21,14 @@ if [ -z "$(find "$OUT" -maxdepth 1 -name "*.nds" -print -quit)" ] && [ -f "$ROM"
 fi
 echo "deployed to $OUT"
 if [[ " $* " == *" --package "* ]]; then
-  # Thunderstore layout: manifest, icon, README and CHANGELOG at the root, next to the DLLs (no ROM, no game files)
-  VERSION=$(sed -n 's/.*"version_number": *"\([^"]*\)".*/\1/p' thunderstore/manifest.json)
+  # players extract the zip into the ULTRAKILL folder: it holds BepInEx/plugins/MphSamus/ (never the ROM or game files)
+  VERSION=$(sed -n 's/.*const string Version = "\([^"]*\)".*/\1/p' src/MphSamus/Plugin.cs)
   STAGE="$PWD/release/MPH_Samus-$VERSION"
   rm -rf "$STAGE" "$STAGE.zip"
-  mkdir -p "$STAGE"
+  mkdir -p "$STAGE/BepInEx/plugins/MphSamus"
   cp "$BIN/MphSamus.dll" "$BIN/MphCore.dll" lib/OpenTK.Mathematics.dll lib/CommunityToolkit.HighPerformance.dll \
-     src/MphCore/MphRead/LICENSE-MphRead.txt thunderstore/manifest.json thunderstore/icon.png \
-     README.md CHANGELOG.md LICENSE THIRD-PARTY-NOTICES.md "$STAGE/"
-  (cd "$STAGE" && zip -q -X "../MPH_Samus-$VERSION.zip" *)
+     src/MphCore/MphRead/LICENSE-MphRead.txt LICENSE THIRD-PARTY-NOTICES.md "$STAGE/BepInEx/plugins/MphSamus/"
+  (cd "$STAGE" && zip -q -r -X "../MPH_Samus-$VERSION.zip" BepInEx)
   echo "packaged $STAGE.zip"
 fi
 if [[ " $* " == *" --sim "* ]]; then
